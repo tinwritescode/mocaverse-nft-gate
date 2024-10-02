@@ -20,6 +20,7 @@ contract NFTGate is INFTGate, Initializable, OwnableUpgradeable {
     error NotAuthorized();
     error InvalidDelegateAddress();
     error NotDelegate();
+    error EmailAlreadyRegistered();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -59,6 +60,10 @@ contract NFTGate is INFTGate, Initializable, OwnableUpgradeable {
     function registerEmail(string calldata email, address account) external {
         if (msg.sender != account && !_delegates[account][msg.sender])
             revert NotAuthorized();
+
+        if (bytes(_registeredEmails[account]).length != 0)
+            revert EmailAlreadyRegistered();
+
         _registeredEmails[account] = email;
         emit EmailRegistered(account, email);
     }
@@ -111,5 +116,9 @@ contract NFTGate is INFTGate, Initializable, OwnableUpgradeable {
 
     function getNFTContractAddress() external view returns (address) {
         return address(_nftContract);
+    }
+
+    function setMinimumStakeDuration(uint256 duration) external onlyOwner {
+        _minimumStakeDuration = duration;
     }
 }

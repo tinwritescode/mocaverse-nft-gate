@@ -7,7 +7,7 @@ describe("NFTGate", function () {
   const MINIMUM_STAKE_DURATION = 7 * 24 * 60 * 60; // 1 week in seconds
 
   const setup = async () => {
-    const [owner, addr1, addr2] = await ethers.getSigners();
+    const [owner, addr1, addr2, addr3] = await ethers.getSigners();
 
     // Deploy a mock NFT contract
     const MockNFT = await ethers.getContractFactory("MockNFT");
@@ -20,7 +20,7 @@ describe("NFTGate", function () {
       await mockNFT.getAddress(),
     ])) as unknown as NFTGate;
 
-    return { owner, addr1, addr2, mockNFT, nftGate };
+    return { owner, addr1, addr2, addr3, mockNFT, nftGate };
   };
 
   describe("Initialization", function () {
@@ -96,6 +96,33 @@ describe("NFTGate", function () {
       const { nftGate, addr2 } = await loadFixture(setup);
 
       expect(await nftGate.isEligible(addr2.address)).to.be.false;
+    });
+
+    it("Should not allow updating email if already registered", async function () {
+      const { nftGate, addr1, addr2, addr3, mockNFT } = await loadFixture(
+        setup
+      );
+
+      // mint
+      await mockNFT.mint(addr1.address);
+      await mockNFT.connect(addr1).approve(await nftGate.getAddress(), 1);
+      await nftGate.connect(addr1).stakeNFT(1);
+
+      await ethers.provider.send("evm_increaseTime", [MINIMUM_STAKE_DURATION]);
+      await ethers.provider.send("evm_mine", []);
+
+      await nftGate.connect(addr1).addDelegate(addr2.address);
+      await nftGate.connect(addr1).addDelegate(addr3.address);
+
+      // register email
+      await nftGate
+        .connect(addr2)
+        .registerEmail("test@example.com", addr1.address);
+
+      // try to register email
+      await expect(
+        nftGate.connect(addr3).registerEmail("test@example.com", addr1.address)
+      ).to.be.revertedWithCustomError(nftGate, "EmailAlreadyRegistered");
     });
   });
 });

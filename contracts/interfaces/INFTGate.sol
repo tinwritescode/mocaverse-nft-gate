@@ -33,4 +33,5 @@ interface INFTGate {
         address user
     ) external view returns (string memory);
     function isAllowed(address user) external view returns (bool);
+    function setMinimumStakeDuration(uint256 duration) external;
 }

@@ -5,8 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "hardhat test",
-    "compile": "hardhat compile",
-    "typechain": "hardhat typechain"
+    "compile": "hardhat compile"
   },
   "keywords": [],
   "author": "",
